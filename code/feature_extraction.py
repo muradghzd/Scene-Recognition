@@ -26,19 +26,29 @@ def feature_extraction(img, feature):
         gamma_correction = 0
         nlevels = 64
 
-        # Your code here. You should also change the return value.
-
-        return np.zeros((1500, 36), dtype=np.float32)
-        # `.shape[0]` do not have to be (and may not) 1500,
-        # but `.shape[1]` should be 36.
+        args = [win_size, block_size, block_stride, cell_size,
+               nbins, deriv_aperture, win_sigma, histogram_norm_type,
+               l2_hys_threshold, gamma_correction, nlevels ]
+        
+        hog = cv2.HOGDescriptor(*args)
+        
+        des = np.reshape(hog.compute(img), (-1, 36))
+        
+        return des
+        
 
     elif feature == 'SIFT':
 
-        # Your code here. You should also change the return value.
+        sift = cv2.SIFT_create()
+        
+        kp_list = []
+        for i in range(0, img.shape[0], 20):
+            for j in range(0, img.shape[1], 20):
+                kp = cv2.KeyPoint(i, j, 1)
+                kp_list.append(kp)
 
-        return np.zeros((1500, 128), dtype=np.float32)
-        # `.shape[0]` do not have to be (and may not) 1500,
-        # but `.shape[1]` should be 128.
-
+        _, des = sift.compute(img,kp_list)
+        
+        return des
 
 

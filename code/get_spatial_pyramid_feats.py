@@ -27,7 +27,29 @@ def get_spatial_pyramid_feats(image_paths, max_level, feature):
     vocab = np.load(f'vocab_{feature}.npy')
 
     vocab_size = vocab.shape[0]
+    d = vocab_size * ((4**(max_level+1)-1)//3)
+    spatial_pyramid = np.zeros((len(image_paths), d))
 
-    # Your code here. You should also change the return value.
-
-    return np.zeros((1500, 36))
+    for i, path in enumerate(image_paths):
+        img = cv2.imread(path)
+        a, b = img.shape[:2]
+        
+        for level in range(max_level+1):
+            prev_block = (4**level - 1)//3
+            two_level = 2**level
+            weight = 2**(-max_level) if level == 0 else 2**(-max_level+level-1)
+            for x in range(two_level):
+                for y in range(two_level):
+                    sub_img =  img[x*(a//two_level):(x+1)*(a//two_level),
+                                   y*(b//two_level):(y+1)*(b//two_level)]
+                    features = feature_extraction(sub_img, feature)
+                    dist_matrix = pdist(features, vocab)
+                    idxs = np.argmin(dist_matrix, axis=1)
+                    hist, _ = np.histogram(idxs, vocab_size, range=(0,vocab_size-1)) 
+                    hist = hist*weight
+                    num = (x+1)*(y+1)-1 # Number of subimage
+                    
+                    spatial_pyramid[i,(num+prev_block)*vocab_size:(num+prev_block+1)*vocab_size] = hist
+        spatial_pyramid[i,:] = spatial_pyramid[i,:] / np.linalg.norm(spatial_pyramid[i,:])
+    print(f"shape is {spatial_pyramid.shape} and value is {spatial_pyramid}")
+    return spatial_pyramid

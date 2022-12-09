@@ -26,7 +26,16 @@ def svm_classify(train_image_feats, train_labels, test_image_feats, kernel_type)
     """
 
     categories = np.unique(train_labels)
+    score_table = np.zeros((len(test_image_feats),len(categories)))
 
-    # Your code here. You should also change the return value.
+    for i, cat in enumerate(categories):
+        X_labels = (train_labels == cat).astype(int)
 
-    return np.array([categories[0]] * 1500)
+        svm_clf = svm.SVC(kernel=kernel_type.lower(), C=2.36)
+        svm_clf.fit(train_image_feats, X_labels)
+        prob_scores = svm_clf.decision_function(test_image_feats)
+        score_table[:,i] = prob_scores
+
+    test_scores = categories[score_table.argmax(1)]
+
+    return test_scores
